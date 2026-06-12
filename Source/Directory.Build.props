@@ -1,6 +1,7 @@
 <Project>
     <PropertyGroup>
-         <CelestePrefix>G:\Games\Steam\steamapps\common\Celeste\</CelestePrefix> 
+         <CelestePrefix Condition="Exists('/Users/cruz/Library/Application Support/Steam/steamapps/common/Celeste/Celeste.app/Contents/Resources/Celeste.dll')">/Users/cruz/Library/Application Support/Steam/steamapps/common/Celeste/Celeste.app/Contents/Resources</CelestePrefix>
+         <CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('G:\Games\Steam\steamapps\common\Celeste\Celeste.dll')">G:\Games\Steam\steamapps\common\Celeste\</CelestePrefix>
 <!--         <CelestePrefix>C:\Program Files (x86)\Steam\steamapps\common\Celeste\</CelestePrefix>-->
     </PropertyGroup>
 </Project>

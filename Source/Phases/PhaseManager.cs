@@ -118,16 +118,21 @@ public class PhaseManager
     /// </summary>
     public void TransitionToLevel(string mapSid)
     {
-        PendingLevelSID = mapSid;
-        Phase = GamePhase.Playing;
-
         var areaData = AreaData.Get(mapSid);
         if (areaData == null)
         {
             UmcLogger.Error($"Failed to find area data for: {mapSid}");
-            PendingLevelSID = null;
+
+            // Recover the lobby so players aren't stuck with frozen inputs
+            if (Players.PlayerSpawner.Instance != null)
+                Players.PlayerSpawner.Instance.InputsFrozen = false;
+            if (Lobby.LobbyPhase.Instance != null)
+                Lobby.LobbyPhase.Instance.IsLevelTransitioning = false;
             return;
         }
+
+        PendingLevelSID = mapSid;
+        Phase = GamePhase.Playing;
 
         if (Engine.Scene is Level level)
         {
@@ -143,7 +148,7 @@ public class PhaseManager
     /// </summary>
     public void TransitionToLobby()
     {
-        Phase = GamePhase.Playing;
+        Phase = GamePhase.Lobby;
 
         if (Engine.Scene is Level level)
         {

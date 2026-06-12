@@ -20,7 +20,7 @@
         <PackageReference Include="MonoMod.RuntimeDetour" Version="*" PrivateAssets="all" ExcludeAssets="runtime" />
         <PackageReference Include="Mono.Cecil" Version="*" />
         <PackageReference Include="CelesteAnalyzer" Version="*" />
-        <PackageReference Include="MonoMod.Utils" Version="25.0.11" />
+        <PackageReference Include="MonoMod.Utils" Version="25.0.12" />
         <PackageReference Include="YamlDotNet" Version="*" />
         <PackageReference Include="Steamworks.NET" Version="20.1.0" />
     </ItemGroup>

@@ -21,6 +21,11 @@ public class LevelButton : Entity
     private const int EntityWidth = 64;
     private const int EntityHeight = 48;
 
+    /// <summary>
+    /// Special MapSID value meaning "pick a random available level".
+    /// </summary>
+    public const string RandomMapSid = "<random>";
+
     // Button dimensions
     private const int ButtonWidth = 64;
     private const int ButtonBaseHeight = 5;
@@ -42,6 +47,17 @@ public class LevelButton : Entity
     /// The text to display on the button.
     /// </summary>
     public string DisplayText { get; private set; }
+
+    /// <summary>
+    /// Whether this button picks a random level.
+    /// </summary>
+    public bool IsRandom => MapSID == RandomMapSid;
+
+    /// <summary>
+    /// Whether this button can be voted on. False when the target map doesn't exist
+    /// (e.g. a level that hasn't been made yet).
+    /// </summary>
+    public bool IsAvailable { get; private set; }
 
     /// <summary>
     /// The color of the text.
@@ -142,7 +158,11 @@ public class LevelButton : Entity
         _baseSolid.Collidable = true;
         scene.Add(_baseSolid);
 
-        UmcLogger.Info($"LevelButton added: MapSID='{MapSID}', Preview='{PreviewTexturePath}'");
+        IsAvailable = IsRandom || (!string.IsNullOrEmpty(MapSID) && AreaData.Get(MapSID) != null);
+        if (!IsAvailable)
+            UmcLogger.Warn($"LevelButton: Map '{MapSID}' not found - button disabled");
+
+        UmcLogger.Info($"LevelButton added: MapSID='{MapSID}', Preview='{PreviewTexturePath}', Available={IsAvailable}");
     }
 
     public override void Removed(Scene scene)
@@ -329,6 +349,7 @@ public class LevelButton : Entity
     public HashSet<int> GetPlayersOnButton()
     {
         var result = new HashSet<int>();
+        if (!IsAvailable) return result;
         if (Scene is not Level level) return result;
 
         // Check area on top of the button
@@ -436,7 +457,13 @@ public class LevelButton : Entity
             RenderText(basePos, previewWidth, previewHeight);
         }
 
-        // 5. Draw player arrows
+        // 5. Darken unavailable buttons (map doesn't exist yet)
+        if (!IsAvailable)
+        {
+            Draw.Rect(basePos.X + previewX, basePos.Y, previewWidth, previewHeight, Color.Black * 0.65f);
+        }
+
+        // 6. Draw player arrows
         RenderArrows(basePos);
     }
 

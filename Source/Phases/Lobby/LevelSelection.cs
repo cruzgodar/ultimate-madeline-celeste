@@ -121,6 +121,14 @@ public class LevelSelection
                 _eliminationActive = false;
                 _cameraZooming = false;
                 _countdownUI?.Hide();
+
+                // Unfreeze inputs in case the transition was cancelled after Go
+                if (PlayerSpawner.Instance != null)
+                    PlayerSpawner.Instance.InputsFrozen = false;
+                if (LobbyPhase.Instance != null)
+                    LobbyPhase.Instance.IsLevelTransitioning = false;
+
+                CameraController.Instance?.ClearFocusTarget();
                 break;
         }
     }
@@ -567,8 +575,60 @@ public class LevelSelection
 
     private void StartLevel()
     {
-        UmcLogger.Info($"=== STARTING LEVEL: {_selectedMapSid} ===");
-        NetworkManager.BroadcastWithSelf(new LoadLevelMessage { MapSid = _selectedMapSid });
+        var mapSid = ResolveMapSid(_selectedMapSid);
+        if (mapSid == null)
+        {
+            UmcLogger.Error($"Cannot start level '{_selectedMapSid}' - no available map. Cancelling.");
+            CancelLevelTransition();
+            return;
+        }
+
+        UmcLogger.Info($"=== STARTING LEVEL: {mapSid} ===");
+        NetworkManager.BroadcastWithSelf(new LoadLevelMessage { MapSid = mapSid });
+    }
+
+    /// <summary>
+    /// Resolves the special "&lt;random&gt;" SID to a random available map, and
+    /// validates that the chosen map actually exists.
+    /// </summary>
+    private string ResolveMapSid(string mapSid)
+    {
+        if (mapSid == LevelButton.RandomMapSid)
+        {
+            if (_lobby.Scene is not Level level) return null;
+
+            var candidates = level.Tracker.GetEntities<LevelButton>()
+                .Cast<LevelButton>()
+                .Where(b => b.IsAvailable && !b.IsRandom)
+                .Select(b => b.MapSID)
+                .ToList();
+
+            if (candidates.Count == 0) return null;
+
+            var chosen = candidates[Calc.Random.Next(candidates.Count)];
+            UmcLogger.Info($"Random level selected: {chosen}");
+            return chosen;
+        }
+
+        return AreaData.Get(mapSid) != null ? mapSid : null;
+    }
+
+    /// <summary>
+    /// Unfreezes the lobby if a level transition can't proceed.
+    /// </summary>
+    private void CancelLevelTransition()
+    {
+        if (PlayerSpawner.Instance != null)
+            PlayerSpawner.Instance.InputsFrozen = false;
+        if (LobbyPhase.Instance != null)
+            LobbyPhase.Instance.IsLevelTransitioning = false;
+
+        _selectedMapSid = null;
+        _winningButton = null;
+        _lastBroadcastNumber = -1;
+        _countdownUI?.Hide();
+
+        BroadcastVoteState(LevelVotePhase.None);
     }
 }
 

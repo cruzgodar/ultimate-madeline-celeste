@@ -356,7 +356,6 @@ public class PlacingPhase
         // Register prop ownership for trap kill tracking (unless prop skips registration)
         if (!propInstance.Prop.SkipRegistration)
         {
-            UmcLogger.Info("REGISTERRRRRRRRRRRRRRRRRRRR");
             RoundState.Current?.RegisterPlacedProp(propInstance, player);
         }
 
